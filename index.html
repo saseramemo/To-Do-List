@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TO DO LIST ELEGAN | Soft Design</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS Styling (ELEGANT & SOFT MODERN) --- */
+        :root {
+            /* Palet Warna Lebih Lembut dan Menenangkan */
+            --primary-color: #6a9ac9; /* Biru Laut Muda */
+            --secondary-color: #92c5a0; /* Hijau Mint Selesai */
+            --warning-color: #f7928e; /* Merah Muda Lembut Overdue/Hapus */
+            --background-light: #fdfdfd; /* Background Sangat Terang */
+            --surface-color: #ffffff; /* Kartu Putih */
+            --surface-soft: #f4f6f9; /* Surface Input Lebih Soft */
+            --text-dark: #3a4750; /* Abu-abu Gelap Hangat */
+            --text-medium: #798799; /* Abu-abu Sedang Lembut */
+            --shadow-subtle: 0 6px 20px rgba(0, 0, 0, 0.08); /* Shadow Lebih Dalam tapi Lebih Lembut */
+            --border-light: #e6e9ef;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 30px 20px; /* Padding Sedikit Lebih Besar */
+            display: flex;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--surface-color);
+            padding: 40px;
+            border-radius: 20px; /* Sudut Lebih Bulat */
+            box-shadow: var(--shadow-subtle);
+            width: 100%;
+            max-width: 750px; /* Lebar Sedikit Lebih Besar */
+            transition: all 0.4s ease;
+        }
+        
+        /* Kontrol Header */
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin: 0;
+            font-size: 2.2em;
+        }
+
+        .data-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        /* Navigasi Tab */
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-light);
+        }
+
+        .tab-button {
+            padding: 12px 25px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            font-size: 1.05em;
+            font-weight: 500;
+            color: var(--text-medium);
+            transition: color 0.3s, border-bottom 0.3s;
+            margin-right: 15px;
+            border-bottom: 3px solid transparent;
+            position: relative;
+            top: 2px; /* Untuk mengimbangi border bottom */
+        }
+
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Styling Formulir Umum */
+        #todo-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 1px solid var(--border-light);
+            border-radius: 15px;
+            background-color: var(--surface-soft);
+        }
+        
+        /* Gaya Input dan Tombol Umum */
+        input:not([type="file"]), textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #c8d1da;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 1em;
+            font-family: inherit;
+            color: var(--text-dark);
+            background-color: var(--surface-color); /* Input background lebih cerah */
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(106, 154, 201, 0.2); /* Shadow focus yang lebih lembut */
+        }
+        
+        button {
+            padding: 14px 25px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        
+        #todo-form button {
+            font-size: 1.1em;
+        }
+        
+        .data-buttons button {
+            padding: 10px 18px;
+            font-size: 0.95em;
+            background-color: var(--text-medium);
+        }
+
+        button:hover {
+            background-color: #5587b9;
+        }
+        
+        .data-buttons button:hover {
+            background-color: #6b7787;
+        }
+        
+        /* Styling Daftar Tugas */
+        h2 {
+            color: var(--text-dark);
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+
+        #todo-list, #completed-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .todo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            margin-bottom: 18px;
+            border-radius: 12px;
+            background-color: var(--surface-color);
+            border-left: 8px solid var(--primary-color); /* Border sedikit lebih tebal */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .todo-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .todo-item.overdue {
+            border-left: 8px solid var(--warning-color);
+            background-color: #fffafa; /* Background sangat lembut untuk overdue */
+        }
+
+        .todo-item.completed {
+            border-left: 8px solid var(--secondary-color);
+            opacity: 0.9;
+            background-color: #f8fffb;
+        }
+        
+        .todo-item-content {
+            flex-grow: 1;
+        }
+        
+        .todo-item-content h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.25em;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .todo-item-content p {
+            margin: 5px 0;
+            color: var(--text-medium);
+            font-size: 1em;
+            line-height: 1.4;
+        }
+        
+        .todo-item-content small {
+            color: var(--text-medium);
+            font-size: 0.9em;
+            font-weight: 500;
+            display: block; /* Agar deadline berada di baris baru */
+            margin-top: 8px;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+            margin-left: 20px;
+        }
+
+        /* Tombol Aksi */
+        .item-actions button {
+            font-size: 0.9em;
+            padding: 10px 15px;
+            min-width: 80px;
+            font-weight: 500;
+            background-color: #aeb6bf; /* Warna abu-abu netral untuk aksi default */
+        }
+
+        .item-actions button.done-btn {
+            background-color: var(--secondary-color);
+        }
+        .item-actions button.delete-btn {
+            background-color: var(--warning-color);
+        }
+        .item-actions button.edit-btn {
+            background-color: #ffc977; /* Kuning-Oranye Lembut untuk Edit */
+        }
+        
+        .item-actions button:hover {
+            opacity: 0.85;
+        }
+        
+        /* Edit Mode Styling */
+        .todo-item.edit-mode {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .todo-item.edit-mode .todo-item-content {
+            width: 100%;
+        }
+        
+        .todo-item.edit-mode .todo-item-content input, 
+        .todo-item.edit-mode .todo-item-content textarea {
+            margin-bottom: 12px;
+            border-radius: 8px;
+            background-color: var(--surface-soft);
+        }
+        
+        .todo-item.edit-mode .item-actions {
+            margin-left: 0;
+            align-self: flex-end;
+        }
+
+        /* MODAL CUSTOM */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); /* Overlay lebih transparan */
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--surface-color);
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.6em;
+            font-weight: 700;
+        }
+
+        .modal-content p {
+            margin-bottom: 35px;
+            color: var(--text-dark);
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+
+        .modal-actions button {
+            margin: 0 10px;
+            padding: 12px 30px;
+            font-size: 1.05em;
+            font-weight: 600;
+        }
+
+        .modal-actions button.confirm-btn {
+            background-color: var(--warning-color);
+        }
+        .modal-actions button.cancel-btn {
+            background-color: var(--text-medium);
+        }
+        .modal-actions button.info-btn {
+            background-color: var(--primary-color);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        /* Responsiveness */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            .header-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .data-buttons {
+                width: 100%;
+                justify-content: space-between;
+                gap: 5px;
+            }
+            .data-buttons button {
+                flex-grow: 1;
+            }
+            .todo-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 18px 20px;
+            }
+            .item-actions {
+                margin-left: 0;
+                width: 100%;
+                justify-content: space-between;
+                gap: 5px;
+            }
+            .item-actions button {
+                flex-grow: 1;
+                min-width: unset;
+                padding: 10px 5px;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="header-controls">
+        <h1>✨ To Do List</h1>
+        
+        <div class="data-buttons">
+            <button onclick="exportData()">Export</button>
+            <input type="file" id="import-file" accept=".json" style="display: none;">
+            <button onclick="document.getElementById('import-file').click();">Import</button>
+        </div>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab('active-tasks')">Tugas Aktif</button>
+        <button class="tab-button" onclick="openTab('completed-tasks')">Tugas Selesai</button>
+    </div>
+
+    <div id="active-tasks" class="tab-content active">
+        <form id="todo-form">
+            <input type="text" id="task-name" placeholder="Nama Tugas (Wajib)" required>
+            <input type="date" id="task-deadline" required>
+            <textarea id="task-description" placeholder="Deskripsi (Opsional)" rows="2"></textarea>
+            <button type="submit">➕ Tambah Tugas</button>
+        </form>
+
+        <h2>Pekerjaan Menanti</h2> 
+        
+        <ul id="todo-list">
+            </ul>
+    </div>
+    
+    <div id="completed-tasks" class="tab-content">
+        <h2>Pekerjaan Selesai</h2>
+        <ul id="completed-list">
+            </ul>
+    </div>
+</div>
+
+<div id="custom-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="modal-title">Konfirmasi</h3>
+        <p id="modal-message">Apakah Anda yakin?</p>
+        <div class="modal-actions">
+            </div>
+    </div>
+</div>
+
+<script>
+    // --- JavaScript Fungsionalitas (Sama dengan kode Anda, hanya penyesuaian kecil) ---
+
+    const todoForm = document.getElementById('todo-form');
+    const todoList = document.getElementById('todo-list');
+    const completedList = document.getElementById('completed-list');
+    
+    let tasks = []; 
+    let completedTasks = []; 
+
+    // =============================
+    // MODAL HANDLER
+    // =============================
+    const modal = document.getElementById('custom-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalMessage = document.getElementById('modal-message');
+    const modalActions = modal.querySelector('.modal-actions');
+
+    /**
+     * Menampilkan modal dengan pesan dan tombol kustom.
+     * @param {string} title - Judul modal.
+     * @param {string} message - Isi pesan.
+     * @param {Array<Object>} buttons - Array objek tombol: {text: string, className: string, action: function}.
+     */
+    function showModal(title, message, buttons) {
+        modalTitle.textContent = title;
+        modalMessage.innerHTML = message; // Menggunakan innerHTML untuk mendukung tag HTML seperti <strong> atau **
+        modalActions.innerHTML = '';
+        
+        buttons.forEach(btnConfig => {
+            const button = document.createElement('button');
+            button.textContent = btnConfig.text;
+            button.className = btnConfig.className;
+            button.onclick = function() {
+                modal.style.display = 'none';
+                if (btnConfig.action) {
+                    btnConfig.action();
+                }
+            };
+            modalActions.appendChild(button);
+        });
+
+        modal.style.display = 'flex';
+    }
+
+
+    // =============================
+    // TAB HANDLER
+    // =============================
+    window.openTab = function(tabName) {
+        const tabContents = document.getElementsByClassName('tab-content');
+        for (let i = 0; i < tabContents.length; i++) {
+            tabContents[i].classList.remove('active');
+        }
+
+        const tabButtons = document.getElementsByClassName('tab-button');
+        for (let i = 0; i < tabButtons.length; i++) {
+            tabButtons[i].classList.remove('active');
+        }
+
+        document.getElementById(tabName).classList.add('active');
+        document.querySelector(`.tab-button[onclick="openTab('${tabName}')"]`).classList.add('active');
+    }
+
+
+    // =============================
+    // DATA & RENDER
+    // =============================
+    function loadTasks() {
+        tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        completedTasks = JSON.parse(localStorage.getItem('completedTasks') || '[]');
+        renderTasks();
+        renderCompletedTasks();
+    }
+
+    function saveTasks() {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
+    }
+
+    function sortTasks() {
+        tasks.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+    }
+    
+    function renderCompletedTasks() {
+        completedList.innerHTML = '';
+        completedTasks.forEach((task) => {
+            const listItem = document.createElement('li');
+            listItem.className = 'todo-item completed';
+
+            const deadlineDisplay = task.deadline ? new Date(task.deadline).toLocaleDateString('id-ID') : 'Tidak ada';
+
+            listItem.innerHTML = `
+                <div class="todo-item-content">
+                    <h3>✅ ${task.name}</h3>
+                    ${task.description ? `<p>${task.description}</p>` : ''}
+                    <small>Selesai. Deadline: ${deadlineDisplay}</small>
+                </div>
+                <div class="item-actions">
+                    <button class="delete-btn" onclick="confirmDeleteTask('${task.id}', true)">Hapus</button>
+                </div>
+            `;
+            completedList.appendChild(listItem);
+        });
+    }
+
+    function renderTasks() {
+        sortTasks(); 
+        todoList.innerHTML = ''; 
+        const today = new Date().setHours(0, 0, 0, 0); 
+
+        tasks.forEach((task, index) => {
+            const listItem = document.createElement('li');
+            listItem.className = 'todo-item';
+            listItem.dataset.index = index;
+            listItem.dataset.deadline = task.deadline;
+            
+            const taskDeadlineDate = new Date(task.deadline).setHours(0, 0, 0, 0);
+            let statusText = '';
+            let statusIcon = '⏳';
+
+            if (taskDeadlineDate < today) {
+                listItem.classList.add('overdue');
+                statusText = ' (Terlambat)';
+                statusIcon = '🚨';
+            }
+            
+            const deadlineDisplay = new Date(task.deadline).toLocaleDateString('id-ID');
+
+            listItem.innerHTML = `
+                <div class="todo-item-content">
+                    <h3>${statusIcon} ${task.name}</h3>
+                    ${task.description ? `<p>${task.description}</p>` : ''}
+                    <small>Deadline: ${deadlineDisplay}${statusText}</small>
+                </div>
+                <div class="item-actions">
+                    <button class="done-btn" onclick="confirmCompleteTask(${index})">Selesai</button>
+                    <button class="edit-btn" onclick="toggleEdit(${index})">Edit</button>
+                    <button class="delete-btn" onclick="confirmDeleteTask(${index}, false)">Hapus</button>
+                </div>
+            `;
+            todoList.appendChild(listItem);
+        });
+        saveTasks(); 
+    }
+
+    // =============================
+    // CRUD HANDLERS
+    // =============================
+    todoForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('task-name').value.trim();
+        const description = document.getElementById('task-description').value.trim();
+        const deadline = document.getElementById('task-deadline').value;
+
+        if (name && deadline) {
+            const newTask = { 
+                id: Date.now().toString(), 
+                name, description, deadline 
+            };
+            tasks.push(newTask);
+            todoForm.reset();
+            renderTasks();
+            
+            showModal('Tugas Ditambahkan', 'Tugas baru berhasil ditambahkan ke daftar aktif.', 
+            [{ text: 'OK', className: 'info-btn' }]);
+        } else {
+            showModal('Input Wajib', 'Nama Tugas dan Deadline wajib diisi!', 
+            [{ text: 'Tutup', className: 'cancel-btn' }]);
+        }
+    });
+
+    // Konfirmasi dan Pindah ke Selesai
+    window.confirmCompleteTask = function(index) {
+        showModal(
+            'Konfirmasi Selesai',
+            `Apakah Anda yakin tugas "<strong>${tasks[index].name}</strong>" sudah Selesai?`,
+            [
+                { text: 'Ya, Selesai', className: 'done-btn', action: () => completeTask(index) },
+                { text: 'Batal', className: 'cancel-btn' }
+            ]
+        );
+    };
+
+    function completeTask(index) {
+        const [taskToComplete] = tasks.splice(index, 1);
+        completedTasks.push(taskToComplete);
+        renderTasks();
+        renderCompletedTasks();
+        showModal('Berhasil', 'Tugas dipindahkan ke daftar Selesai! 🎉', 
+            [{ text: 'OK', className: 'info-btn' }]);
+    }
+    
+    // Konfirmasi Hapus
+    window.confirmDeleteTask = function(identifier, isCompleted) {
+        const taskName = isCompleted 
+            ? completedTasks.find(t => t.id === identifier)?.name
+            : tasks[identifier]?.name;
+            
+        showModal(
+            'Konfirmasi Hapus',
+            `Apakah Anda yakin ingin menghapus tugas "<strong>${taskName}</strong>" secara permanen?`,
+            [
+                { text: 'Hapus Permanen', className: 'confirm-btn', action: () => deleteTask(identifier, isCompleted) },
+                { text: 'Batal', className: 'cancel-btn' }
+            ]
+        );
+    };
+
+    function deleteTask(identifier, isCompleted) {
+        if (isCompleted) {
+            completedTasks = completedTasks.filter(task => task.id !== identifier);
+            renderCompletedTasks();
+        } else {
+            tasks.splice(identifier, 1);
+            renderTasks();
+        }
+        showModal('Berhasil', 'Tugas berhasil dihapus.', [{ text: 'OK', className: 'info-btn' }]);
+    }
+
+    // Fungsi untuk mengaktifkan/menonaktifkan mode edit 
+    window.toggleEdit = function(index) {
+        const itemElement = todoList.querySelector(`[data-index="${index}"]`);
+        const task = tasks[index];
+        
+        if (itemElement.classList.contains('edit-mode')) {
+            // Mode Simpan
+            const newName = itemElement.querySelector('.edit-name').value.trim();
+            const newDescription = itemElement.querySelector('.edit-description').value.trim();
+            const newDeadline = itemElement.querySelector('.edit-deadline').value;
+            
+            if (newName && newDeadline) {
+                showModal(
+                    'Konfirmasi Edit',
+                    `Simpan perubahan untuk tugas "<strong>${newName}</strong>"?`,
+                    [
+                        { text: 'Simpan', className: 'info-btn', action: () => {
+                            tasks[index].name = newName;
+                            tasks[index].description = newDescription;
+                            tasks[index].deadline = newDeadline;
+                            renderTasks();
+                            showModal('Berhasil', 'Tugas berhasil diperbarui.', [{ text: 'OK', className: 'info-btn' }]);
+                        }},
+                        { text: 'Batal', className: 'cancel-btn', action: () => renderTasks() } 
+                    ]
+                );
+            } else {
+                showModal('Input Wajib', 'Nama Tugas dan Deadline wajib diisi saat mengedit!', 
+                [{ text: 'Tutup', className: 'cancel-btn' }]);
+            }
+        } else {
+            // Mode Edit
+            itemElement.classList.add('edit-mode');
+            const contentDiv = itemElement.querySelector('.todo-item-content');
+            
+            contentDiv.innerHTML = `
+                <input type="text" class="edit-name" value="${task.name.replace(/(\u23F3|\u2757\uFE0F|\uD83D\uDEA8)\s*/, '')}" required>
+                <textarea class="edit-description" rows="2">${task.description}</textarea>
+                <input type="date" class="edit-deadline" value="${task.deadline}" required>
+            `;
+            
+            // Ubah tombol menjadi 'Simpan' dan 'Batal'
+            const actionContainer = itemElement.querySelector('.item-actions');
+            actionContainer.innerHTML = `
+                <button class="done-btn" onclick="toggleEdit(${index})">Simpan</button>
+                <button class="delete-btn" onclick="renderTasks()">Batal</button>
+            `;
+        }
+    };
+
+
+    // =============================
+    // IMPORT/EXPORT HANDLERS
+    // =============================
+    window.exportData = function() {
+        const allData = {
+            tasks: tasks,
+            completedTasks: completedTasks
+        };
+        
+        const dataStr = JSON.stringify(allData, null, 2); 
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+        const exportFileDefaultName = 'todo-list-data.json';
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click(); 
+        linkElement.remove();
+        
+        showModal('Export Berhasil', 'Data tugas berhasil diunduh.', 
+            [{ text: 'OK', className: 'info-btn' }]);
+    }
+    
+    document.getElementById('import-file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        showModal(
+            'Konfirmasi Import',
+            'Apakah Anda yakin ingin mengimpor data? Data Tugas Aktif dan Selesai Anda saat ini akan **DITIMPA**.',
+            [
+                { text: 'Ya, Import', className: 'confirm-btn', action: () => handleImport(file) },
+                { text: 'Batal', className: 'cancel-btn', action: () => e.target.value = '' }
+            ]
+        );
+    });
+    
+    function handleImport(file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const result = JSON.parse(event.target.result);
+                
+                if (Array.isArray(result)) {
+                    tasks = result;
+                    completedTasks = []; 
+                } else if (result.tasks) {
+                    tasks = result.tasks || [];
+                    completedTasks = result.completedTasks || [];
+                } else {
+                    throw new Error("Format data tidak dikenali.");
+                }
+
+                saveTasks(); 
+                loadTasks(); 
+                
+                showModal('Import Berhasil', 'Data Tugas Aktif dan Selesai telah diperbarui.', 
+                [{ text: 'OK', className: 'info-btn' }]);
+                
+            } catch (error) {
+                showModal('Import Gagal', 'Gagal mengimpor data. Pastikan file adalah JSON yang valid.', 
+                [{ text: 'Tutup', className: 'cancel-btn' }]);
+                console.error("Error saat parsing JSON:", error);
+            }
+        };
+
+        reader.readAsText(file);
+        document.getElementById('import-file').value = ''; 
+    }
+
+    window.onload = loadTasks;
+</script>
+
+</body>
+</html>
