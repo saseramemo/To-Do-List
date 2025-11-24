@@ -319,6 +319,30 @@
             margin-top: 8px;
         }
 
+        .deadline-estimate {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .deadline-estimate.normal {
+            background-color: #e6f3ff;
+            color: var(--primary-color);
+        }
+
+        .deadline-estimate.soon {
+            background-color: #fff4e6;
+            color: #e67e22;
+        }
+
+        .deadline-estimate.overdue {
+            background-color: #ffe6e6;
+            color: var(--warning-color);
+        }
+
         .item-category {
             display: inline-block;
             padding: 4px 12px;
@@ -582,6 +606,41 @@
     let completedCategoryFilterValue = 'all';
 
     // =============================
+    // FUNGSI ESTIMASI DEADLINE
+    // =============================
+    function calculateDeadlineEstimate(deadline) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const deadlineDate = new Date(deadline);
+        deadlineDate.setHours(0, 0, 0, 0);
+        
+        const timeDiff = deadlineDate.getTime() - today.getTime();
+        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        
+        let text, className;
+        
+        if (daysDiff < 0) {
+            text = `${Math.abs(daysDiff)} hari terlambat`;
+            className = 'overdue';
+        } else if (daysDiff === 0) {
+            text = 'Deadline hari ini';
+            className = 'soon';
+        } else if (daysDiff === 1) {
+            text = '1 hari lagi';
+            className = 'soon';
+        } else if (daysDiff <= 3) {
+            text = `${daysDiff} hari lagi`;
+            className = 'soon';
+        } else {
+            text = `${daysDiff} hari lagi`;
+            className = 'normal';
+        }
+        
+        return { text, className };
+    }
+
+    // =============================
     // MODAL HANDLER
     // =============================
     const modal = document.getElementById('custom-modal');
@@ -629,17 +688,25 @@
     }
 
     // =============================
-    // MANAJEMEN KATEGORI
+    // MANAJEMEN KATEGORI - DIPERBAIKI
     // =============================
     function loadCategories() {
-        categories = JSON.parse(localStorage.getItem('categories') || '[]');
+        const savedData = JSON.parse(localStorage.getItem('todoAppData') || '{}');
+        
+        if (savedData.categories !== undefined) {
+            categories = savedData.categories || [];
+        } else {
+            // Fallback ke format lama
+            categories = JSON.parse(localStorage.getItem('categories') || '[]');
+        }
+        
         renderCategories();
         updateCategorySelect();
         renderCategoryFilters();
     }
 
     function saveCategories() {
-        localStorage.setItem('categories', JSON.stringify(categories));
+        saveAllData(); // Simpan semua data termasuk kategori
     }
 
     function renderCategories() {
@@ -719,6 +786,7 @@
             if (categories.includes(categoryName)) {
                 showModal('Kategori Sudah Ada', `Kategori "${categoryName}" sudah ada dalam daftar.`, 
                     [{ text: 'OK', className: 'info-btn' }]);
+                newCategoryInput.value = ''; // Clear input
                 return;
             }
             
@@ -781,18 +849,43 @@
     }
 
     // =============================
-    // DATA & RENDER
+    // DATA & RENDER - DIPERBAIKI
     // =============================
     function loadTasks() {
-        tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-        completedTasks = JSON.parse(localStorage.getItem('completedTasks') || '[]');
+        const savedData = JSON.parse(localStorage.getItem('todoAppData') || '{}');
+        
+        // Backward compatibility - jika data masih dalam format lama
+        if (savedData.tasks !== undefined && savedData.completedTasks !== undefined && savedData.categories !== undefined) {
+            tasks = savedData.tasks || [];
+            completedTasks = savedData.completedTasks || [];
+            categories = savedData.categories || [];
+        } else {
+            // Format lama, coba load dari localStorage terpisah
+            tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+            completedTasks = JSON.parse(localStorage.getItem('completedTasks') || '[]');
+            categories = JSON.parse(localStorage.getItem('categories') || '[]');
+            
+            // Migrasi ke format baru
+            saveAllData();
+        }
+        
         renderTasks();
         renderCompletedTasks();
     }
 
+    function saveAllData() {
+        const allData = {
+            tasks: tasks,
+            completedTasks: completedTasks,
+            categories: categories,
+            exportDate: new Date().toISOString(),
+            version: '1.0'
+        };
+        localStorage.setItem('todoAppData', JSON.stringify(allData));
+    }
+
     function saveTasks() {
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-        localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
+        saveAllData(); // Sekarang simpan semua data dalam satu objek
     }
 
     function sortTasks() {
@@ -848,6 +941,9 @@
             const taskDeadlineDate = new Date(task.deadline).setHours(0, 0, 0, 0);
             let statusText = '';
             let statusIcon = '⏳';
+            
+            // Hitung estimasi deadline
+            const deadlineEstimate = calculateDeadlineEstimate(task.deadline);
 
             if (taskDeadlineDate < today) {
                 listItem.classList.add('overdue');
@@ -863,6 +959,7 @@
                     ${task.description ? `<p>${task.description}</p>` : ''}
                     ${task.category ? `<span class="item-category">${task.category}</span>` : ''}
                     <small>Deadline: ${deadlineDisplay}${statusText}</small>
+                    <div class="deadline-estimate ${deadlineEstimate.className}">${deadlineEstimate.text}</div>
                 </div>
                 <div class="item-actions">
                     <button class="done-btn" onclick="confirmCompleteTask(${index})">Selesai</button>
@@ -1019,26 +1116,28 @@
     };
 
     // =============================
-    // IMPORT/EXPORT HANDLERS
+    // IMPORT/EXPORT HANDLERS - DIPERBAIKI
     // =============================
     window.exportData = function() {
         const allData = {
             tasks: tasks,
             completedTasks: completedTasks,
-            categories: categories
+            categories: categories,
+            exportDate: new Date().toISOString(),
+            version: '1.0'
         };
         
         const dataStr = JSON.stringify(allData, null, 2); 
         const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
 
-        const exportFileDefaultName = 'todo-list-data.json';
+        const exportFileDefaultName = 'todo-list-data-' + new Date().toISOString().split('T')[0] + '.json';
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', dataUri);
         linkElement.setAttribute('download', exportFileDefaultName);
         linkElement.click(); 
         linkElement.remove();
         
-        showModal('Export Berhasil', 'Data tugas dan kategori berhasil diunduh.', 
+        showModal('Export Berhasil', 'Data tugas, tugas selesai, dan kategori berhasil diunduh.', 
             [{ text: 'OK', className: 'info-btn' }]);
     }
     
@@ -1048,10 +1147,22 @@
 
         showModal(
             'Konfirmasi Import',
-            'Apakah Anda yakin ingin mengimpor data? Data Tugas Aktif, Selesai, dan Kategori Anda saat ini akan **DITIMPA**.',
+            'Apakah Anda yakin ingin mengimpor data?<br><strong>Semua data saat ini akan diganti dengan data dari file.</strong>',
             [
-                { text: 'Ya, Import', className: 'confirm-btn', action: () => handleImport(file) },
-                { text: 'Batal', className: 'cancel-btn', action: () => e.target.value = '' }
+                { 
+                    text: 'Ya, Import', 
+                    className: 'confirm-btn', 
+                    action: () => handleImport(file) 
+                },
+                { 
+                    text: 'Batal', 
+                    className: 'cancel-btn', 
+                    action: () => {
+                        e.target.value = '';
+                        showModal('Import Dibatalkan', 'Import data telah dibatalkan.', 
+                            [{ text: 'OK', className: 'info-btn' }]);
+                    }
+                }
             ]
         );
     });
@@ -1060,32 +1171,50 @@
         const reader = new FileReader();
         reader.onload = function(event) {
             try {
-                const result = JSON.parse(event.target.result);
+                const importedData = JSON.parse(event.target.result);
                 
-                // Handle data lama yang hanya berisi array tasks
-                if (Array.isArray(result)) {
-                    tasks = result;
-                    completedTasks = [];
-                    categories = [];
-                } else {
-                    tasks = result.tasks || [];
-                    completedTasks = result.completedTasks || [];
-                    categories = result.categories || [];
+                // Validasi struktur data yang diimpor
+                if (!importedData.tasks || !importedData.completedTasks || !importedData.categories) {
+                    throw new Error('Format file tidak valid');
                 }
-
-                saveTasks(); 
-                saveCategories();
-                loadTasks();
-                loadCategories();
                 
-                showModal('Import Berhasil', 'Data Tugas Aktif, Selesai, dan Kategori telah diperbarui.', 
-                [{ text: 'OK', className: 'info-btn' }]);
+                // Ganti semua data dengan data yang diimpor
+                tasks = importedData.tasks || [];
+                completedTasks = importedData.completedTasks || [];
+                categories = importedData.categories || [];
+                
+                // Reset filter
+                activeCategoryFilter = 'all';
+                completedCategoryFilterValue = 'all';
+                
+                // Simpan ke localStorage
+                saveAllData();
+                
+                // Render ulang semua komponen - DIPERBAIKI
+                renderCategories();
+                updateCategorySelect();
+                renderCategoryFilters();
+                renderTasks();
+                renderCompletedTasks();
+                
+                showModal('Import Berhasil', 
+                    `Data berhasil diimpor!<br>
+                    - ${tasks.length} tugas aktif<br>
+                    - ${completedTasks.length} tugas selesai<br>
+                    - ${categories.length} kategori`, 
+                    [{ text: 'OK', className: 'info-btn' }]);
                 
             } catch (error) {
-                showModal('Import Gagal', 'Gagal mengimpor data. Pastikan file adalah JSON yang valid.', 
-                [{ text: 'Tutup', className: 'cancel-btn' }]);
                 console.error("Error saat parsing JSON:", error);
+                showModal('Import Gagal', 
+                    'Gagal mengimpor data. Pastikan file adalah file export yang valid dari aplikasi ini.', 
+                    [{ text: 'Tutup', className: 'cancel-btn' }]);
             }
+        };
+
+        reader.onerror = function() {
+            showModal('Error', 'Terjadi kesalahan saat membaca file.', 
+                [{ text: 'Tutup', className: 'cancel-btn' }]);
         };
 
         reader.readAsText(file);
