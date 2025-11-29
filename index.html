@@ -467,6 +467,85 @@
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }
+
+        /* ========== FITUR BARU: PENCARIAN DAN NAVIGASI ========== */
+        .search-container {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .search-container input {
+            padding-right: 50px;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-medium);
+            font-size: 1.2em;
+        }
+
+        .dashboard {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .dashboard-item {
+            flex: 1;
+            min-width: 150px;
+            padding: 20px;
+            border-radius: 12px;
+            background-color: var(--surface-soft);
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .dashboard-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .dashboard-item.active {
+            background-color: #e6f3ff;
+            border: 1px solid var(--primary-color);
+        }
+
+        .dashboard-item.completed {
+            background-color: #f0f9f2;
+            border: 1px solid var(--secondary-color);
+        }
+
+        .dashboard-item.overdue {
+            background-color: #fff0f0;
+            border: 1px solid var(--warning-color);
+        }
+
+        .dashboard-count {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .dashboard-label {
+            font-size: 0.9em;
+            color: var(--text-medium);
+            font-weight: 500;
+        }
+
+        .category-count {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
         
         /* Responsiveness */
         @media (max-width: 600px) {
@@ -509,6 +588,12 @@
             .category-input-group {
                 flex-direction: column;
             }
+            .dashboard {
+                flex-direction: column;
+            }
+            .dashboard-item {
+                min-width: 100%;
+            }
         }
         
     </style>
@@ -524,6 +609,22 @@
             <button onclick="exportData()">Export</button>
             <input type="file" id="import-file" accept=".json" style="display: none;">
             <button onclick="document.getElementById('import-file').click();">Import</button>
+        </div>
+    </div>
+    
+    <!-- ========== FITUR BARU: DASHBOARD NAVIGASI ========== -->
+    <div class="dashboard">
+        <div class="dashboard-item active">
+            <div class="dashboard-count" id="active-count">0</div>
+            <div class="dashboard-label">Tugas Aktif</div>
+        </div>
+        <div class="dashboard-item completed">
+            <div class="dashboard-count" id="completed-count">0</div>
+            <div class="dashboard-label">Tugas Selesai</div>
+        </div>
+        <div class="dashboard-item overdue">
+            <div class="dashboard-count" id="overdue-count">0</div>
+            <div class="dashboard-label">Tugas Terlambat</div>
         </div>
     </div>
     
@@ -545,6 +646,12 @@
     </div>
 
     <div id="active-tasks" class="tab-content active">
+        <!-- ========== FITUR BARU: PENCARIAN ========== -->
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="🔍 Cari tugas...">
+            <div class="search-icon">🔍</div>
+        </div>
+
         <form id="todo-form">
             <input type="text" id="task-name" placeholder="Nama Tugas (Wajib)" required>
             <input type="date" id="task-deadline" required>
@@ -568,6 +675,12 @@
     </div>
     
     <div id="completed-tasks" class="tab-content">
+        <!-- ========== FITUR BARU: PENCARIAN TUGAS SELESAI ========== -->
+        <div class="search-container">
+            <input type="text" id="search-completed-input" placeholder="🔍 Cari tugas selesai...">
+            <div class="search-icon">🔍</div>
+        </div>
+
         <!-- Filter Kategori untuk Tugas Selesai -->
         <div class="category-filter" id="completed-category-filter">
             <!-- Filter akan diisi secara dinamis -->
@@ -599,11 +712,20 @@
     const categoriesContainer = document.getElementById('categories-container');
     const taskCategorySelect = document.getElementById('task-category');
     
+    // ========== FITUR BARU: VARIABEL PENCARIAN ==========
+    const searchInput = document.getElementById('search-input');
+    const searchCompletedInput = document.getElementById('search-completed-input');
+    const activeCountElement = document.getElementById('active-count');
+    const completedCountElement = document.getElementById('completed-count');
+    const overdueCountElement = document.getElementById('overdue-count');
+    
     let tasks = []; 
     let completedTasks = []; 
     let categories = [];
     let activeCategoryFilter = 'all';
     let completedCategoryFilterValue = 'all';
+    let activeSearchQuery = '';
+    let completedSearchQuery = '';
 
     // =============================
     // FUNGSI ESTIMASI DEADLINE
@@ -714,8 +836,15 @@
         categories.forEach((category, index) => {
             const categoryTag = document.createElement('div');
             categoryTag.className = 'category-tag';
+            
+            // Hitung jumlah tugas per kategori
+            const taskCount = tasks.filter(task => task.category === category).length;
+            const completedTaskCount = completedTasks.filter(task => task.category === category).length;
+            const totalCount = taskCount + completedTaskCount;
+            
             categoryTag.innerHTML = `
                 <span>${category}</span>
+                <span class="category-count">${totalCount}</span>
                 <button class="delete-category" onclick="deleteCategory(${index})">×</button>
             `;
             categoriesContainer.appendChild(categoryTag);
@@ -743,7 +872,8 @@
 
         categories.forEach(category => {
             const button = document.createElement('button');
-            button.textContent = category;
+            const taskCount = tasks.filter(task => task.category === category).length;
+            button.textContent = `${category} (${taskCount})`;
             button.className = activeCategoryFilter === category ? 'active' : '';
             button.onclick = () => setActiveCategoryFilter(category);
             categoryFilter.appendChild(button);
@@ -759,7 +889,8 @@
 
         categories.forEach(category => {
             const button = document.createElement('button');
-            button.textContent = category;
+            const taskCount = completedTasks.filter(task => task.category === category).length;
+            button.textContent = `${category} (${taskCount})`;
             button.className = completedCategoryFilterValue === category ? 'active' : '';
             button.onclick = () => setCompletedCategoryFilter(category);
             completedCategoryFilter.appendChild(button);
@@ -869,6 +1000,7 @@
             saveAllData();
         }
         
+        updateDashboard();
         renderTasks();
         renderCompletedTasks();
     }
@@ -892,12 +1024,40 @@
         tasks.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
     }
     
+    // ========== FITUR BARU: UPDATE DASHBOARD ==========
+    function updateDashboard() {
+        // Hitung jumlah tugas aktif
+        activeCountElement.textContent = tasks.length;
+        
+        // Hitung jumlah tugas selesai
+        completedCountElement.textContent = completedTasks.length;
+        
+        // Hitung jumlah tugas terlambat
+        const today = new Date().setHours(0, 0, 0, 0);
+        const overdueCount = tasks.filter(task => {
+            const taskDeadlineDate = new Date(task.deadline).setHours(0, 0, 0, 0);
+            return taskDeadlineDate < today;
+        }).length;
+        
+        overdueCountElement.textContent = overdueCount;
+    }
+    
     function renderCompletedTasks() {
         completedList.innerHTML = '';
         let filteredTasks = completedTasks;
         
+        // Filter berdasarkan kategori
         if (completedCategoryFilterValue !== 'all') {
             filteredTasks = completedTasks.filter(task => task.category === completedCategoryFilterValue);
+        }
+        
+        // Filter berdasarkan pencarian
+        if (completedSearchQuery) {
+            const query = completedSearchQuery.toLowerCase();
+            filteredTasks = filteredTasks.filter(task => 
+                task.name.toLowerCase().includes(query) || 
+                (task.description && task.description.toLowerCase().includes(query))
+            );
         }
         
         filteredTasks.forEach((task) => {
@@ -928,8 +1088,18 @@
 
         let filteredTasks = tasks;
         
+        // Filter berdasarkan kategori
         if (activeCategoryFilter !== 'all') {
             filteredTasks = tasks.filter(task => task.category === activeCategoryFilter);
+        }
+        
+        // Filter berdasarkan pencarian
+        if (activeSearchQuery) {
+            const query = activeSearchQuery.toLowerCase();
+            filteredTasks = filteredTasks.filter(task => 
+                task.name.toLowerCase().includes(query) || 
+                (task.description && task.description.toLowerCase().includes(query))
+            );
         }
 
         filteredTasks.forEach((task, index) => {
@@ -969,8 +1139,21 @@
             `;
             todoList.appendChild(listItem);
         });
+        
+        updateDashboard();
         saveTasks(); 
     }
+
+    // ========== FITUR BARU: PENCARIAN ==========
+    searchInput.addEventListener('input', function() {
+        activeSearchQuery = this.value;
+        renderTasks();
+    });
+    
+    searchCompletedInput.addEventListener('input', function() {
+        completedSearchQuery = this.value;
+        renderCompletedTasks();
+    });
 
     // =============================
     // CRUD HANDLERS
@@ -1186,6 +1369,10 @@
                 // Reset filter
                 activeCategoryFilter = 'all';
                 completedCategoryFilterValue = 'all';
+                activeSearchQuery = '';
+                completedSearchQuery = '';
+                searchInput.value = '';
+                searchCompletedInput.value = '';
                 
                 // Simpan ke localStorage
                 saveAllData();
